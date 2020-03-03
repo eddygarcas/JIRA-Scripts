@@ -8,26 +8,35 @@ import com.onresolve.jira.groovy.user.FormField
 import com.atlassian.jira.issue.history.ChangeItemBean
 import com.atlassian.jira.issue.Issue
 import java.text.SimpleDateFormat;
-import java.text.DateFormat
+import java.text.DateFormat;
+import com.atlassian.jira.issue.status.category.StatusCategory;
 
-def startStatus = ["in progress"]
-def closedStatus = ["done","drop","closed"]
+def startStatus = []
+def closedStatus = []
 
 def changeHistoryManager = ComponentAccessor.getChangeHistoryManager()
 def changeItems = changeHistoryManager.getChangeItemsForField(issue,"status")
 
+def workflow = ComponentAccessor.getWorkflowManager().getWorkflow(issue)
+workflow.getLinkedStatusObjects().each{ status ->
+    if (status.getStatusCategory().getKey() == StatusCategory.COMPLETE) {
+        closedStatus << status.getName().toLowerCase()
+    }
+    if (status.getStatusCategory().getKey() == StatusCategory.IN_PROGRESS) {
+        startStatus << status.getName().toLowerCase()
+    }
+}
+
 def inProgressTime=0
 def doneTime=0
 def days = 0
-def stillWip = false
 
-String holidays = "2018-12-06,2018-12-08,2018-12-24,2018-12-25,2018-12-26,2018-12-31,"+
-                  "2019-01-01,2019-04-19,2019-04-22,2019-05-01,2019-06-24,2019-08-15,2019-09-11,2019-09-24,2019-11-01,2019-12-06,2019-12-08,2019-12-24,2019-12-25,2019-12-25,2019-12-26,2019-12-31,"+
-    			  "2020-01-01"
+String holidays = "2019-12-06,2019-12-08,2019-12-24,2019-12-25,2019-12-26,2019-12-31,"+
+                  "2020-01-01,2020-04-19,2020-04-22,2020-05-01,2020-06-24,2020-08-15,2020-09-11,2020-09-24,2020-11-01,2020-12-06,2020-12-08,2020-12-24,2020-12-25,2020-12-25,2020-12-26,2020-12-31,"+
+    			  "2021-01-01"
 
 changeItems.each{
     ChangeItemBean item->
-    
     if( (startStatus.contains(item.getToString().toLowerCase())) && inProgressTime==0)
     	inProgressTime=item.getCreated().getTime()
     if(closedStatus.contains(item.getToString().toLowerCase()))
