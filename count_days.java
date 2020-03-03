@@ -11,19 +11,18 @@ import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import com.atlassian.jira.issue.status.category.StatusCategory;
 
-def startStatus = []
-def closedStatus = []
+def startStatus = [], closedStatus = [] ,openStatus = []
 
 def changeHistoryManager = ComponentAccessor.getChangeHistoryManager()
 def changeItems = changeHistoryManager.getChangeItemsForField(issue,"status")
 
 def workflow = ComponentAccessor.getWorkflowManager().getWorkflow(issue)
 workflow.getLinkedStatusObjects().each{ status ->
-    if (status.getStatusCategory().getKey() == StatusCategory.COMPLETE) {
-        closedStatus << status.getName().toLowerCase()
-    }
-    if (status.getStatusCategory().getKey() == StatusCategory.IN_PROGRESS) {
-        startStatus << status.getName().toLowerCase()
+    switch(status.getStatusCategory().getKey()) 
+    {
+    	case StatusCategory.COMPLETE: closedStatus << status.getName().toLowerCase(); break
+        case StatusCategory.IN_PROGRESS: startStatus << status.getName().toLowerCase(); break
+        case StatusCategory.TO_DO: openStatus << status.getName().toLowerCase(); break
     }
 }
 
@@ -43,17 +42,11 @@ changeItems.each{
         doneTime=item.getCreated().getTime()
 }
 
-
-
 if (inProgressTime!=0){
-    if(doneTime==0){
-    	doneTime=System.currentTimeMillis()
-	}
+    if(doneTime==0) doneTime=System.currentTimeMillis()
+ 
     Calendar startCal = Calendar.getInstance()
     startCal.setTime(new Date((long)inProgressTime))
-    
-    
-    
     Calendar endCal = Calendar.getInstance()
     endCal.setTime(new Date((long)doneTime))
     
